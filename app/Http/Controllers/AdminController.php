@@ -57,24 +57,6 @@ class AdminController extends Controller
             return redirect()->route('show.admindashboard')->with('success', 'Job deleted successfully.');
         }
 
-        // public function edit($id)
-        // {
-        //     $job = Job::findOrFail($id);
-        //     return view('admin.editjob', compact('job'));
-        // }
-        // public function update(Request $request, $id)
-        // {
-        //     $validated = $request->validate([
-        //         'name' => 'required|string|max:255',
-        //         'description' => 'required|string',
-        //         'vacancy' => 'required|integer|min:1',
-        //     ]);
-
-        //     $job = Job::findOrFail($id);
-        //     $job->update($validated);
-
-        //     return redirect()->route('show.admindashboard')->with('success', 'Job updated successfully!');
-        // }
 
         public function viewResume($id)
         {

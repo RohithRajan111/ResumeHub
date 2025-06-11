@@ -35,7 +35,7 @@
                 @else
                     <a class="btn btn-outline-primary me-2" href="{{ route('show.login') }}">Login</a>
                     <a class="btn btn-primary" href="{{ route('register') }}">Register</a>
-@endif
+                @endif
 
 
     

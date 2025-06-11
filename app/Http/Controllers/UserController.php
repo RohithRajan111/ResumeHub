@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SendUserMailJob;
 use App\Mail\ActionResultMail;
 use App\Mail\AdminNotificationMail;
 use App\Models\Application;
@@ -121,48 +122,41 @@ class UserController extends Controller
 
 
 
-           public function apply(Request $request)
-            {
-                $validated = $request->validate([
-                    'name' => 'required|string',
-                    'email' => 'required|email',
-                    'phone' => 'required|string',
-                    'job_id' => 'required|exists:jobs,id',
-                    'document' => 'required|file|mimes:doc,txt|max:2048',
-                ]);
 
-                $file = $request->file('document');
-                $filename = time() . "_resume_" . preg_replace('/\s+/', '_', $validated['name']) . '.' . $file->getClientOriginalExtension();
-                $file->move(public_path('uploads'), $filename);
-                $filepath = public_path('uploads/' . $filename);
 
-                Application::create([
-                    'name' => $validated['name'],
-                    'email' => $validated['email'],
-                    'phone' => $validated['phone'],
-                    'job_id' => $validated['job_id'],
-                    'resume_path' => 'uploads/' . $filename,
-                ]);
+public function apply(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string',
+            'email' => 'required|email',
+            'phone' => 'required|string',
+            'job_id' => 'required|exists:jobs,id',
+            'document' => 'required|file|mimes:doc,txt|max:2048',
+        ]);
 
-                $job = Job::findOrFail($validated['job_id']);
+        // Store the file
+        $file = $request->file('document');
+        $filename = time() . "_resume_" . preg_replace('/\s+/', '_', $validated['name']) . '.' . $file->getClientOriginalExtension();
+        $file->move(public_path('uploads'), $filename);
 
-                if (!empty($validated['email']) && filter_var($validated['email'], FILTER_VALIDATE_EMAIL)) {
-                    Mail::to($validated['email'])->queue(new ActionResultMail(
-                        $validated['name'],
-                        $validated['email'],
-                        $validated['phone'],
-                        $filepath
-                    ));
-                } else {
-                    return back()->withErrors(['email' => 'Please provide a valid email address.']);
-                }
-                Mail::to('rohithrajan111@gmail.com')->queue(new AdminNotificationMail(
-                    $validated['name'],
-                    $validated['email'],
-                    $validated['phone'],
-                    $filepath
-                ));
+        $relativePath = 'uploads/' . $filename;
 
-                return redirect()->route('user.dashboard')->with('success', 'Form submitted and file uploaded successfully!');
-            }
+        // Save application
+        Application::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'],
+            'job_id' => $validated['job_id'],
+            'resume_path' => $relativePath,
+        ]);
+
+        // Remove uploaded file object if still in array
+        unset($validated['document']);
+
+        // Dispatch Job (Pass only safe data)
+        SendUserMailJob::dispatch($validated, $relativePath);
+
+        return redirect()->route('user.dashboard')->with('success', 'Form submitted and file uploaded successfully!');
+    }
+
 }

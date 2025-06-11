@@ -17,7 +17,7 @@
         <label>Resume (DOC/TXT):</label>
         <input type="file" name="document" required>
 
-        <button type="submit">Apply</button>
+        <button type="submit" class="btn btn-success mt-3">Apply</button>
     </form>
 
     @if ($errors->any())
